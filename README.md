@@ -1,15 +1,15 @@
-# JitRL: Just-in-Time Reinforcement Learning for LLM Agents
+# JitRL: Just-in-Time Reinforcement Learning
 
 <p align="center">
-  <b>Cross-Episode Memory for Continuous Learning in LLM-based Agents</b>
+  <b>Continual Learning in LLM Agents Without Gradient Updates</b>
 </p>
 
 <p align="center">
   <a href="#overview">Overview</a> •
-  <a href="#key-features">Key Features</a> •
   <a href="#installation">Installation</a> •
   <a href="#quick-start">Quick Start</a> •
   <a href="#architecture">Architecture</a> •
+  <a href="#results">Results</a> •
   <a href="#citation">Citation</a>
 </p>
 
@@ -17,23 +17,22 @@
 
 ## Overview
 
-**JitRL** is a research framework that enables LLM-based agents to learn from their past experiences through **cross-episode memory**. Unlike traditional LLM agents that start fresh each episode, JitRL agents accumulate knowledge over time, retrieving relevant past experiences to guide their decision-making in new situations.
+While LLM agents excel at general tasks, they struggle with **continual adaptation** due to frozen weights after deployment. Conventional RL offers a solution but incurs prohibitive computational costs and the risk of catastrophic forgetting.
+
+**JitRL** is a training-free framework that enables **test-time policy optimization without any gradient updates**. Instead of updating parameters, JitRL:
+
+- Maintains a **dynamic, non-parametric memory** that stores experience trajectories as `<state, action, reward>` triplets
+- **Retrieves relevant trajectories** given the current state to estimate action advantages on-the-fly
+- **Directly modulates the LLM's output logits** based on these advantage estimates
+
+We theoretically prove that this additive update rule is the **exact closed-form solution** to the KL-constrained policy optimization objective.
 
 <p align="center">
-  <img src="figures/intro1.png" alt="JitRL vs Standard RL" width="600">
+  <img src="figures/framework4.png" alt="JitRL Framework" width="800">
 </p>
 <p align="center">
-  <em>Comparison between Standard RL (training time) and Just-In-Time RL (test time)</em>
+  <em>JitRL Framework: The inference stream retrieves experiences from memory to estimate advantages and adjust action logits; the memory update stream stores evaluated trajectories with step-wise returns.</em>
 </p>
-
-### Motivation
-
-Standard LLM agents face a fundamental limitation: they cannot learn from their mistakes or successes across episodes. JitRL addresses this by:
-
-1. **Storing successful trajectories** - Recording action sequences that led to positive outcomes
-2. **Similarity matching** - Using Jaccard similarity to find relevant past experiences
-3. **Experience-guided action selection** - Adjusting action probabilities based on historical rewards
-4. **Continuous improvement** - Accumulating knowledge across hundreds of episodes
 
 ### Supported Environments
 
@@ -45,43 +44,6 @@ Standard LLM agents face a fundamental limitation: they cannot learn from their 
 ---
 
 ## Key Features
-
-### Cross-Episode Memory System
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Cross-Episode Memory                          │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
-│  │  Episode 1  │    │  Episode 2  │    │  Episode N  │   ...   │
-│  │  (stored)   │    │  (stored)   │    │  (current)  │         │
-│  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘         │
-│         │                  │                  │                 │
-│         ▼                  ▼                  ▼                 │
-│  ┌──────────────────────────────────────────────────┐          │
-│  │              Episode Storage                      │          │
-│  │  • Trajectory context (past states + actions)     │          │
-│  │  • Step-level rewards and scores                  │          │
-│  └──────────────────────────────────────────────────┘          │
-│                          │                                      │
-│                          ▼                                      │
-│  ┌──────────────────────────────────────────────────┐          │
-│  │         Jaccard Similarity Retrieval              │          │
-│  │  • N-gram tokenization on states                  │          │
-│  │  • Weighted similarity (history + current)        │          │
-│  │  • Discounted reward calculation                  │          │
-│  └──────────────────────────────────────────────────┘          │
-│                          │                                      │
-│                          ▼                                      │
-│  ┌──────────────────────────────────────────────────┐          │
-│  │         Action Score Adjustment                   │          │
-│  │  • Advantage calculation over baseline            │          │
-│  │  • Memory-guided action selection                 │          │
-│  └──────────────────────────────────────────────────┘          │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Advanced Features
 
 - **Jaccard Similarity Matching**: N-gram based similarity for trajectory retrieval
 - **LLM-based Step Scoring**: Automatic evaluation of action quality
@@ -213,15 +175,6 @@ python test_webarena_lite.py --tasks 0 --repeat 10 --disable_memory
 
 ## Architecture
 
-### System Framework
-
-<p align="center">
-  <img src="figures/framework4.png" alt="JitRL Framework" width="800">
-</p>
-<p align="center">
-  <em>JitRL Framework: Inference stream retrieves experiences from memory to adjust action logits; Memory update stores evaluated trajectories with step-wise returns</em>
-</p>
-
 ### Project Structure
 
 ```
@@ -260,61 +213,6 @@ JitRL/
 │   └── config_files_lite/            # WebArena-Lite (165 tasks)
 │
 └── README.md
-```
-
-### Memory System Flow
-
-```
-Episode Start
-     │
-     ▼
-┌─────────────┐     ┌──────────────────┐
-│ Get State   │────▶│ Generate Summary │
-└─────────────┘     └────────┬─────────┘
-                             │
-                             ▼
-                    ┌──────────────────┐
-                    │ Retrieve Similar │
-                    │   Experiences    │
-                    └────────┬─────────┘
-                             │
-                             ▼
-                    ┌──────────────────┐
-                    │ Calculate Action │
-                    │   Advantages     │
-                    └────────┬─────────┘
-                             │
-                             ▼
-┌─────────────┐     ┌──────────────────┐
-│ LLM Propose │────▶│ Adjust Scores    │
-│   Actions   │     │ with Memory      │
-└─────────────┘     └────────┬─────────┘
-                             │
-                             ▼
-                    ┌──────────────────┐
-                    │ Execute Action   │
-                    └────────┬─────────┘
-                             │
-                             ▼
-                    ┌──────────────────┐
-                    │ Update History   │
-                    └────────┬─────────┘
-                             │
-                    ┌────────┴────────┐
-                    │                 │
-                    ▼                 ▼
-             Episode End        Next Step
-                    │                 │
-                    ▼                 │
-            ┌──────────────┐          │
-            │ Store Episode│          │
-            │  in Memory   │          │
-            └──────────────┘          │
-                                      │
-                    ┌─────────────────┘
-                    │
-                    ▼
-              (Loop back to Get State)
 ```
 
 ---
