@@ -1,21 +1,16 @@
-import traceback
 import json
 import math
 import os
 import re
 import random
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from pathlib import Path
 from browsergym.experiments import Agent, AbstractAgentArgs
 from browsergym.utils.obs import flatten_axtree_to_str, flatten_dom_to_str, prune_html
-from langchain.schema import HumanMessage, SystemMessage
-from warnings import warn
 
 from .utils.openai_helpers import chat_completion_with_retries, extract_json_from_response, TokenLimitExceededError
 from .utils.cross_episode_memory import CrossEpisodeMemory
-from .utils.utils import generate_trajectory_summary, generate_history_summary, dump_obs
 from .utils.chat_api import ChatModelArgs
-from .utils.llm_utils import ParseError, retry
 from .dynamic_prompting import ActionSpace
 
 
@@ -206,9 +201,6 @@ class BrowserGymMemoryAgent(Agent):
                     screenshots_dir=screenshots_dir
                 )
 
-        victory = success
-
-    
     def update_scores(self, state_node, options_with_logits, k, r, memory_text, current_url=None, screenshots_dir=None):
         # Skip memory retrieval if memory is disabled
         if not self.enable_cross_mem or self.cross_mem is None:
@@ -1048,7 +1040,6 @@ Start your response with {{ and end with }}. Nothing else."""
                                 # Skip tokens that cannot be converted to integers
                             continue
 
-                    selected_prob = math.exp(last_token_logprob.logprob)
                     print(f"\n[Token Mode] Extracted logprobs from {len(options_with_logits)} options")
 
         elif self.logit_mode == 'verbalized':
@@ -1070,8 +1061,6 @@ Start your response with {{ and end with }}. Nothing else."""
                         'confidence': confidence
                     }
                     # print(f"  Option {i}: confidence={confidence}%, normalized_prob={normalized_prob:.4f}, logprob={logprob:.4f}")
-
-            selected_prob = json_response.get(f"option{best_choice}_confidence", 0) / 100.0
 
         # Normalize all actions in options_with_logits
         from .utils.utils import normalize_action

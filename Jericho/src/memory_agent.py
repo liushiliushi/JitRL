@@ -4,7 +4,7 @@ import os
 import time
 from .openai_helpers import chat_completion_with_retries
 from .cross_episode_memory import CrossEpisodeMemory
-from .utils import generate_trajectory_summary, generate_history_summary, generate_progress_analysis_with_recommendation
+from .utils import generate_trajectory_summary, generate_history_summary
 
 class MemoryAgent:
     def __init__(self, args, guiding_prompt: str = None):
@@ -128,9 +128,7 @@ class MemoryAgent:
                 else:
                     print("\nGuiding prompt remains unchanged.\n")
             elif self.enable_cross_mem and not self.update_guiding_prompt:
-                print("\n[INFO] Guiding prompt update is disabled. Skipping prompt update.\n")
-
-        victory = self._detect_victory_from_observation(state)    
+                print("\n[INFO] Guiding prompt update is disabled. Skipping prompt update.\n")    
     
     def calculate_exploration_probability(self, nearest_trajectories, action_rewards):
         """

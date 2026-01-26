@@ -351,10 +351,6 @@ and executed by a program, make sure to follow the formatting instructions.
             ]
         )
 
-# workflow_path = "examples/map_autoeval.txt"
-# workflow = "\n\n" + open(workflow_path, 'r').read()
-# workflow = "" #"click('id') # when clicking, use the element id in string format."
-
 class SystemPrompt(PromptElement):
     _prompt = """\
 You are an agent trying to solve a web task based on the content of the page and

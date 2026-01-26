@@ -193,8 +193,6 @@ class CrossEpisodeMemory:
 
         # First generate earlier summary using our updated function
         # Create game_history from states and actions for the summary
-        if current_step == 40:
-            stop = 1
         earlier_summary = current_summary
 
         # Use LLM to generate optimized trajectory context
@@ -637,61 +635,6 @@ class CrossEpisodeMemory:
         # Save vector database to disk
         self._save_vector_database()
         self.step_context_cache = []
-        # Generate and save abstract episode with summaries
-        # self._save_abstract_episode(game_history, final_score, success)
-
-    def _save_abstract_episode(self, game_history: List[Dict[str, Any]], final_score: float, success: bool):
-        """
-        Save abstract episode using stored step summaries.
-
-        Args:
-            game_history: List of game history entries
-            final_score: Final score of the episode
-            success: Whether the episode was successful
-        """
-        if not game_history:
-            return
-
-        abstract_episode = {
-            'timestamp': os.path.basename(self.base_dir),
-            'num_steps': len(game_history),
-            'final_score': final_score,
-            'success': success,
-            'steps': []
-        }
-
-        # Use stored summaries for each step
-        for i in range(len(game_history)):
-            # Use stored summary if available, otherwise use fallback
-            if i < len(self.step_summaries):
-                summary = self.step_summaries[i]
-            else:
-                summary = f"Step {i}: [State: no summary available]"
-
-            # Create abstract step with summary instead of full state
-            abstract_step = {
-                'step_num': i,
-                'summary': summary,
-                'action': game_history[i].get('action', ''),
-                'reward': game_history[i].get('reward', 0),
-                'score': game_history[i].get('score', 0)
-            }
-
-            # Add delta score if available
-            if i == 0:
-                abstract_step['delta_score'] = game_history[i].get('score', 0) or 0
-            else:
-                prev_score = game_history[i-1].get('score', 0) or 0
-                current_score = game_history[i].get('score', 0) or 0
-                abstract_step['delta_score'] = current_score - prev_score
-
-            abstract_episode['steps'].append(abstract_step)
-
-        # Save abstract episode
-        self._append_jsonl(self.episodes_abstract_path, abstract_episode)
-
-        # Clear step summaries for next episode
-        self.step_summaries = []
 
     def load_episodes(self) -> List[Dict[str, Any]]:
         """Load all stored episodes."""
@@ -735,246 +678,32 @@ class CrossEpisodeMemory:
 
         return inter / union if union > 0 else 0.0
 
-    def retrieve_similar_with_summary(self, game_history, current_state: str, current_summary: str, k: int = 3, r=0.9, use_summary: bool = True) -> List[Dict[str, Any]]:
-        """
-        Retrieve k most similar trajectory segments using LLM-generated summaries.
-        
-        Args:
-            game_history: Current game history
-            current_state: The current state to append to the trajectory
-            k: Number of similar trajectories to retrieve
-            r: Similarity threshold
-            use_summary: Whether to use LLM summaries (True) or traditional method (False)
-        
-        Returns:
-            List of similar trajectories with similarity scores
-        """
-        if use_summary:
-            return self._retrieve_with_summary(current_summary, k, r)
-        else:
-            return self._retrieve_with_tokens(game_history, current_state, k, r)
-    
-    # def _retrieve_with_summary(self, current_summary, k: int = 3, r=0.9) -> List[Dict[str, Any]]:
-    #     """
-    #     Retrieve similar trajectories using LLM-generated summaries.
-    #     """
-
-    #     self.step_summaries.append(current_summary)
-        
-    #     episodes = self.load_episodes()
-    #     scored_trajectories = []
-        
-    #     for episode in episodes:
-    #         steps = episode.get('steps', [])
-    #         if not steps:
-    #             continue
-            
-    #         # Select all steps starting from step 1
-    #         # Build game history for this window
-    #         window_history = []
-    #         for end_idx in range(len(steps)): 
-    #             step = steps[end_idx]
-    #             window_history.append({
-    #                     'state': step.get('state', ''),
-    #                     'action': step.get('action', ''),
-    #                     'score': step.get('score'),
-    #                     'reward': step.get('reward')
-    #                 })
-                
-    #             # Use stored step_summary if available, otherwise generate new one
-    #             if 'step_summary' in step and step['step_summary']:
-    #                 summary = step['step_summary']
-    #             else:
-    #                 # Fallback to generating summary if not stored
-    #                 summary = generate_trajectory_summary(
-    #                         game_history=window_history,
-    #                         llm_model=self.llm_model,
-    #                         temperature=0.8,
-    #                         max_tokens=500
-    #                     )
-                
-    #             # print("=============window history=============")
-    #             # print(window_history)
-    #             # print(f"============summary================")
-    #             # print(summary)
-    #             # Calculate similarity between summaries using LLM
-    #             sim = calculate_summary_similarity(
-    #                 current_summary, 
-    #                 summary,
-    #                 llm_model=self.llm_model,
-    #                 temperature=0.3
-    #             )
-    #             # print(sim)
-                
-    #             # Calculate discounted return from the END of the window
-    #             discounted_return = 0.0
-    #             for u in range(end_idx, len(steps)):
-    #                 step_reward = steps[u].get('reward', 0)
-    #                 llm_step_score = steps[u].get('llm_step_score', 0)
-    #                 if step_reward == 0:
-    #                     step_reward = llm_step_score
-    #                 discount = self.gamma ** (u - end_idx)
-    #                 discounted_return += discount * step_reward
-                
-    #             result = {
-    #                 'step': steps[end_idx],
-    #                 'trajectory_summary': summary,
-    #                 'action': steps[end_idx].get('action', ''),
-    #                 'similarity': sim,
-    #                 'reward': steps[end_idx].get('reward', 0),
-    #                 'discounted_reward': discounted_return,
-    #                 'episode_final_score': episode.get('final_score', 0),
-    #                 'window_end_idx': end_idx
-    #             }
-    #             scored_trajectories.append((sim, discounted_return, result))
-        
-    #     # Sort by similarity first, then by discounted reward
-    #     scored_trajectories.sort(key=lambda x: (x[0], x[1]), reverse=True)
-    #     filtered_trajectories = [traj for traj in scored_trajectories if traj[0] >= r]
-        
-    #     # Debug output
-    #     if scored_trajectories:
-    #         print("\n=== Summary-based Retrieval ===")
-    #         print(f"Current trajectory summary:\n{current_summary}")
-            
-    #         top_k = min(5, len(scored_trajectories))
-    #         print(f"\nTop {top_k} matches:")
-    #         for i in range(top_k):
-    #             trajectory_data = scored_trajectories[i][2]
-    #             print(f"\n--- Match {i+1} ---")
-    #             print(f"Summary: {trajectory_data['trajectory_summary']}")
-    #             print(f"Similarity: {trajectory_data['similarity']:.4f}")
-    #             print(f"Action: {trajectory_data['action']}")
-    #             print(f"Discounted reward: {trajectory_data['discounted_reward']:.4f}")
-    #         print("="*50)
-        
-    #     return filtered_trajectories[:k]
-    
-    # def _retrieve_with_tokens(self, game_history, current_state: str, k: int = 3, r=0.9) -> List[Dict[str, Any]]:
-    #     """
-    #     Original token-based retrieval method (renamed from retrieve_similar).
-    #     """
-    #     # Original implementation
-    #     query_states = [entry['state'] for entry in game_history]
-    #     query_actions = [entry['action'] for entry in game_history]
-        
-    #     query_states.append(current_state)
-        
-    #     if not query_actions:
-    #         query_actions = []
-        
-    #     episodes = self.load_episodes()
-    #     scored_trajectories = []
-        
-    #     # Use all query states and actions (no sliding window)
-    #     query_states_window = query_states
-    #     query_actions_window = query_actions
-        
-    #     query_trajectory = ""
-    #     for i, state in enumerate(query_states_window):
-    #         query_trajectory += f"STATE: {state}\n"
-    #         if i < len(query_actions_window) and query_actions_window[i]:
-    #             query_trajectory += f"ACTION: {query_actions_window[i]}\n"
-    #     query_trajectory_tokens = self._tokenize(query_trajectory)
-        
-    #     for episode in episodes:
-    #         steps = episode.get('steps', [])
-    #         if not steps:
-    #             continue
-            
-    #         for end_idx in range(len(steps)):
-    #             # Always start from step 0 (first step)
-    #             window_start = 0
-    #             window_size = end_idx + 1
-                
-    #             trajectory = ""
-    #             for i in range(window_start, end_idx + 1):
-    #                 step = steps[i]
-    #                 trajectory += f"STATE: {step.get('state', '')}\n"
-    #                 if step.get('action') and i < end_idx:
-    #                     trajectory += f"ACTION: {step.get('action', '')}\n"
-                
-    #             trajectory_tokens = self._tokenize(trajectory)
-    #             sim = self._jaccard(query_trajectory_tokens, trajectory_tokens)
-                
-    #             discounted_return = 0.0
-    #             for u in range(end_idx, len(steps)):
-    #                 step_reward = steps[u].get('reward', 0)
-    #                 discount = self.gamma ** (u - end_idx)
-    #                 discounted_return += discount * step_reward
-                
-    #             result = {
-    #                 'step': steps[end_idx],
-    #                 'trajectory_length': window_size,
-    #                 'trajectory': trajectory,
-    #                 'action': steps[end_idx].get('action', ''),
-    #                 'similarity': sim,
-    #                 'reward': steps[end_idx].get('reward', 0),
-    #                 'discounted_reward': discounted_return,
-    #                 'episode_final_score': episode.get('final_score', 0),
-    #                 'window_start_idx': window_start,
-    #                 'window_end_idx': end_idx
-    #             }
-    #             scored_trajectories.append((sim, discounted_return, result))
-        
-    #     scored_trajectories.sort(key=lambda x: (x[0], x[1]), reverse=True)
-    #     filtered_trajectories = [traj for traj in scored_trajectories if traj[0] > r]
-        
-    #     if scored_trajectories:
-    #         print("==========================")
-    #         print(query_trajectory)
-    #         print("**************************")
-    #         print(scored_trajectories[0][2]['trajectory'])
-    #         print(scored_trajectories[0][2]['action'])
-    #         print(scored_trajectories[0][2]['similarity'])
-    #         print(scored_trajectories[0][2]['reward'])
-    #         print(scored_trajectories[0][2]['discounted_reward'])
-        
-    #     return filtered_trajectories[:k]
-    
     def retrieve_similar(self, game_history, current_state: str, current_summary: str = None, k: int = 3, r=0.9, use_vector: bool = True, info=None) -> List[Dict[str, Any]]:
         """
-        Retrieve k most similar trajectory segments from all episodes.
-        Can use either LLM-generated summaries or vector embeddings for similarity matching.
+        Retrieve k most similar trajectory segments from all episodes using vector embeddings.
 
         Args:
             game_history: Current game history
             current_state: The current state to append to the trajectory
-            current_summary: Current trajectory summary (required if use_vector=False)
+            current_summary: Current trajectory summary
             k: Number of similar trajectories to retrieve
             r: Similarity threshold
-            use_vector: If True, use vector-based similarity; if False, use summary-based similarity
+            use_vector: Must be True (vector-based retrieval only)
             info: Game environment info dictionary
 
         Returns:
             List of similar trajectories with similarity scores
         """
-        print(f"retrieve similar (method: {'vector' if use_vector else 'summary'})")
+        print(f"retrieve similar (method: vector)")
 
-        if use_vector:
-            # Use vector-based retrieval
-            return self.retrieve_similar_with_vector(
-                game_history=game_history,
-                current_state=current_state,
-                current_summary=current_summary,
-                k=k,
-                r=r,
-                info=info
-            )
-        else:
-            # Use summary-based retrieval (original behavior)
-            if current_summary is None:
-                print("Warning: current_summary is required for summary-based retrieval")
-                return []
-            
-            return self.retrieve_similar_with_summary(
-                game_history=game_history,
-                current_state=current_state,
-                current_summary=current_summary,
-                k=k,
-                r=r,
-                use_summary=True  # Use LLM summaries
-            )
+        return self.retrieve_similar_with_vector(
+            game_history=game_history,
+            current_state=current_state,
+            current_summary=current_summary,
+            k=k,
+            r=r,
+            info=info
+        )
 
     # -------------------- Prompt management --------------------
     def generate_prompt_update(self, game_history: List[Dict[str, Any]], final_score: float, success: bool, current_prompt: str, use_history: bool = True) -> Dict[str, Any]:
