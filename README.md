@@ -19,6 +19,13 @@
 
 While LLM agents excel at general tasks, they struggle with **continual adaptation** due to frozen weights after deployment. Conventional RL offers a solution but incurs prohibitive computational costs and the risk of catastrophic forgetting.
 
+<p align="center">
+  <img src="figures/intro1.png" alt="JitRL vs Standard RL" width="600">
+</p>
+<p align="center">
+  <em>Standard RL performs gradient updates during training; JitRL operates at test time by retrieving relevant trajectories to estimate advantages and refine output logits.</em>
+</p>
+
 **JitRL** is a training-free framework that enables **test-time policy optimization without any gradient updates**. Instead of updating parameters, JitRL:
 
 - Maintains a **dynamic, non-parametric memory** that stores experience trajectories as `<state, action, reward>` triplets
