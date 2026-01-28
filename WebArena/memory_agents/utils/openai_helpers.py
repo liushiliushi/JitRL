@@ -483,7 +483,7 @@ def chat_completion_with_retries(model: str, sys_prompt: str, prompt: str, max_r
     Chat completion with retries, supporting both text and multimodal (image) content.
 
     Args:
-        model: Model name or local model path (e.g., "/ndata/yibo/webrl-llama-3.1-8b")
+        model: Model name or local model path (e.g., "/path/to/local/model")
         sys_prompt: System prompt
         prompt: User prompt (text)
         image_content: Optional. Can be either:

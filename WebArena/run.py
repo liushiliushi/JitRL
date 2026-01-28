@@ -150,7 +150,7 @@ def parse_args():
     # LLM settings
     parser.add_argument(
         "--llm_model",
-        type=str, default="gpt-4o", help="LLM model for web agent. Can be API model name (e.g., 'gpt-4o', 'claude-3-opus') or local model path (e.g., '/ndata/yibo/webrl-llama-3.1-8b')",
+        type=str, default="gpt-4o", help="LLM model for web agent. Can be API model name (e.g., 'gpt-4o', 'claude-3-opus') or local model path (e.g., '/path/to/local/model')",
     )
 
     parser.add_argument(

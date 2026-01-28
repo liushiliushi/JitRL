@@ -683,7 +683,7 @@ def main():
     parser = argparse.ArgumentParser(description="Test WebArena-Lite tasks (165 tasks) with parallel execution")
     parser.add_argument('--model', type=str,
                        default='google/gemini-2.5-flash-preview-09-2025',
-                       help='LLM model to use. Can be API model name (e.g., "gpt-4o", "claude-3-opus") or local model path (e.g., "/ndata/yibo/webrl-llama-3.1-8b")')
+                       help='LLM model to use. Can be API model name (e.g., "gpt-4o", "claude-3-opus") or local model path (e.g., "/path/to/local/model")')
     parser.add_argument('--llm_eval', type=str, default=None,
                        help='LLM model for evaluation (if not specified, uses --model)')
     parser.add_argument('--llm_extract', type=str, default=None,
