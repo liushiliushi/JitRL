@@ -133,9 +133,6 @@ python main.py --game_name zork1 --agent_type jitrl --eval_runs 10
 # Run with cross-episode memory disabled (baseline)
 python main.py --game_name zork1 --agent_type jitrl --no-enable_cross_mem
 
-# Run UCB tree search agent
-python main.py --game_name library --agent_type our --eval_runs 50
-
 # Use different LLM model
 python main.py --game_name zork1 --llm_model openai/gpt-4o --eval_runs 10
 ```
@@ -145,7 +142,7 @@ python main.py --game_name zork1 --llm_model openai/gpt-4o --eval_runs 10
 | Argument | Default | Description |
 |----------|---------|-------------|
 | `--game_name` | `library` | Game to play |
-| `--agent_type` | `jitrl` | Agent: `jitrl`, `our`, `naive`, `awm` |
+| `--agent_type` | `jitrl` | Agent: `jitrl`, `naive`, `awm` |
 | `--eval_runs` | `50` | Number of episodes |
 | `--llm_model` | `google/gemini-2.5-flash-preview-09-2025` | LLM model |
 | `--env_step_limit` | `50` | Max steps per episode |
@@ -196,7 +193,6 @@ JitRL/
 │   ├── console_play.py               # Interactive play mode
 │   └── src/
 │       ├── jitrl_agent.py            # JitRL agent: retrieval + advantage + logit modulation (850 lines)
-│       ├── our_agent.py              # UCB tree search agent (620 lines)
 │       ├── naive_agent.py            # Simple baseline agent
 │       ├── awm_agent.py              # Agent Workflow Memory
 │       ├── cross_episode_memory.py   # Core memory system (900 lines)

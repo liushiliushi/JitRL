@@ -7,7 +7,6 @@ import statistics
 from typing import Tuple, List, Dict, Any
 import src.utils as utils
 from .jitrl_agent import JitRLAgent
-from .our_agent import OurAgent
 from .naive_agent import NaiveAgent
 from .awm_agent import AWMAgent
 from .env import JerichoEnv
@@ -46,8 +45,6 @@ class GameEvaluator:
         
         if self.args.agent_type == 'jitrl':
             agent = JitRLAgent(self.args, guiding_prompt="")
-        elif self.args.agent_type == 'our':
-            agent = OurAgent(self.args, guiding_prompt="")
         elif self.args.agent_type == 'naive':
             agent = NaiveAgent(self.args, guiding_prompt="")
         elif self.args.agent_type == 'awm':
