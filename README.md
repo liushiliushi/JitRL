@@ -5,6 +5,11 @@
 </p>
 
 <p align="center">
+  🎉 <b>Accepted at ICML 2026 (Spotlight)</b> •
+  <a href="https://arxiv.org/abs/2601.18510">arXiv:2601.18510</a>
+</p>
+
+<p align="center">
   <a href="#overview">Overview</a> •
   <a href="#installation">Installation</a> •
   <a href="#quick-start">Quick Start</a> •
@@ -190,7 +195,7 @@ JitRL/
 │   ├── main.py                       # Entry point
 │   ├── console_play.py               # Interactive play mode
 │   └── src/
-│       ├── memory_agent.py           # Memory-augmented agent (850 lines)
+│       ├── jitrl_agent.py            # JitRL agent: retrieval + advantage + logit modulation (850 lines)
 │       ├── our_agent.py              # UCB tree search agent (620 lines)
 │       ├── naive_agent.py            # Simple baseline agent
 │       ├── awm_agent.py              # Agent Workflow Memory
@@ -205,7 +210,7 @@ JitRL/
 │   ├── test_webarena_lite.py         # Main test script
 │   ├── run.py                        # Legacy entry point
 │   ├── memory_agents/
-│   │   ├── memory_agent.py           # BrowserGym agent (1450 lines)
+│   │   ├── jitrl_agent.py            # JitRL BrowserGym agent (1450 lines)
 │   │   ├── dynamic_prompting.py      # Prompt generation (760 lines)
 │   │   └── utils/
 │   │       ├── cross_episode_memory.py  # Memory system (1200 lines)
@@ -315,11 +320,11 @@ Logs are saved to:
 If you use JitRL in your research, please cite:
 
 ```bibtex
-@misc{jitrl2024,
-  title={JitRL: Just-in-Time Reinforcement Learning with Cross-Episode Memory for LLM Agents},
-  author={Your Name},
-  year={2024},
-  howpublished={\url{https://github.com/your-username/JitRL}}
+@article{li2026just,
+  title={Just-In-Time Reinforcement Learning: Continual Learning in LLM Agents Without Gradient Updates},
+  author={Li, Yibo and Lin, Zijie and Deng, Ailin and Zhang, Xuan and He, Yufei and Ji, Shuo and Cao, Tri and Hooi, Bryan},
+  journal={arXiv preprint arXiv:2601.18510},
+  year={2026}
 }
 ```
 

@@ -6,7 +6,7 @@ from .openai_helpers import chat_completion_with_retries
 from .cross_episode_memory import CrossEpisodeMemory
 from .utils import generate_trajectory_summary, generate_history_summary
 
-class MemoryAgent:
+class JitRLAgent:
     def __init__(self, args, guiding_prompt: str = None):
         self.guiding_prompt = guiding_prompt or "Explore the environment and try to maximize your score."
         self.memory = [] # Used by agent

@@ -49,7 +49,7 @@ logging.getLogger('browsergym.experiments.loop').setLevel(logging.WARNING)
 from browsergym.experiments import ExpArgs, EnvArgs
 from browsergym.core.env import BrowserEnv
 
-from memory_agents.memory_agent import MemoryAgentArgs
+from memory_agents.jitrl_agent import JitRLAgentArgs
 from memory_agents.utils.openai_helpers import TokenLimitExceededError
 
 
@@ -179,24 +179,62 @@ def parse_args():
     )
 
     parser.add_argument(
-        '--top_actions',
-        default=3, type=int, help="Number of potential action."
-    )
-    
-    parser.add_argument(
         '--llm_temperature',
         default=0.8, type=float, help="Temperature for the agent's LLM."
     )
 
     parser.add_argument(
-        '--logit_mode',
-        type=str, default="verbalized", choices=["token", "verbalized"],
-        help="Method to extract action probabilities: 'token' uses token logits (GPT), 'verbalized' uses model-provided confidence scores (Gemini)."
+        '--max_memory',
+        default=30, type=int, help="Maximum number of past states to keep in memory for the agent."
+    )
+
+    # ── Strategy Space & Exploration Modules ──
+    parser.add_argument(
+        '--strategy_structure',
+        type=str, default='dag', choices=['flat', 'tree', 'dag', 'action_tree'],
+        help='Strategy space structure: flat (list), tree, dag (directed acyclic graph), or action_tree.'
     )
 
     parser.add_argument(
-        '--max_memory',
-        default=30, type=int, help="Maximum number of past states to keep in memory for the agent."
+        '--guidance_mode',
+        type=str, default='hierarchical', choices=['full_plan', 'step_by_step', 'hierarchical'],
+        help='How strategy guidance is injected into prompts.'
+    )
+
+    parser.add_argument(
+        '--exploration_method',
+        type=str, default='thompson', choices=['ucb', 'thompson', 'epsilon_greedy'],
+        help='Exploration method for selecting strategy paths.'
+    )
+
+    parser.add_argument(
+        '--exploration_c',
+        type=float, default=1.414,
+        help='UCB exploration constant (only used with --exploration_method ucb).'
+    )
+
+    parser.add_argument(
+        '--exploration_epsilon',
+        type=float, default=0.2,
+        help='Epsilon for epsilon-greedy exploration (only used with --exploration_method epsilon_greedy).'
+    )
+
+    parser.add_argument(
+        '--evolution_method',
+        type=str, default='reflection', choices=['reflection', 'dpm'],
+        help='Strategy space evolution method: reflection (periodic LLM review) or dpm (decision point mining on failures).'
+    )
+
+    parser.add_argument(
+        '--evolution_interval',
+        type=int, default=5,
+        help='Number of episodes between reflection-based evolution triggers.'
+    )
+
+    parser.add_argument(
+        '--strategy_seed_file',
+        type=str, default='strategy_seeds.json',
+        help='Path to initial strategy seeds JSON file.'
     )
     
     parser.add_argument(
@@ -265,31 +303,7 @@ def parse_args():
         type=int, default=300, help='Maximum tokens for summarization response.'
     )
     
-    # RAG agent parameters
-    parser.add_argument(
-        '--retrieval_top_k',
-        type=int, default=3, help='Number of top-k most relevant history entries to retrieve.'
-    )
-    
-    parser.add_argument(
-        '--retrieval_threshold',
-        type=float, default=0.1, help='Similarity threshold for retrieving relevant history entries.'
-    )
-
-    parser.add_argument(
-        '--embedding_api_key',
-        type=str, default='None', help='API key for embedding API (if different from main LLM API key).'
-    )
-    
-    parser.add_argument(
-        '--rag_temperature',
-        type=float, default=0.4, help='Temperature for the RAG enhancement LLM.'
-    )
-    
-    parser.add_argument(
-        '--rag_max_tokens',
-        type=int, default=400, help='Maximum tokens for RAG enhancement response.'
-    )
+    # (RAG parameters removed — replaced by strategy space modules)
     
     parser.add_argument(
         '--initial_prompts_file',
@@ -334,12 +348,6 @@ def parse_args():
     parser.add_argument(
         '--save_memory',
         default=True, action=argparse.BooleanOptionalAction, help='Save memory at the end of each episode. When False, memory retrieval still works but no new memories are saved.'
-    )
-
-    parser.add_argument(
-        '--task_similarity_threshold',
-        type=float, default=0.27,
-        help='Task similarity threshold for memory retrieval. Higher values require more similar tasks to share memories. Default: 0.27'
     )
 
     # Config directory selection
@@ -537,7 +545,7 @@ def run_single_episode(args, task_name, reused_agent=None):
     # Select agent args based on --agent_type
     # Map agent types to their constructors
     _AGENT_MAP = {
-        'memory': lambda args: MemoryAgentArgs(args=args),
+        'memory': lambda args: JitRLAgentArgs(args=args),
     }
 
     constructor = _AGENT_MAP.get(args.agent_type)
@@ -546,11 +554,11 @@ def run_single_episode(args, task_name, reused_agent=None):
         try:
             selected_agent_args = constructor(args)
         except Exception as e:
-            print(f"[WARNING] Failed to initialize {args.agent_type} ({e}). Falling back to MemoryAgent.")
-            selected_agent_args = MemoryAgentArgs(args=args)
+            print(f"[WARNING] Failed to initialize {args.agent_type} ({e}). Falling back to JitRLAgent.")
+            selected_agent_args = JitRLAgentArgs(args=args)
     else:
-        print(f"[WARNING] Unsupported agent type: {args.agent_type}. Falling back to MemoryAgent.")
-        selected_agent_args = MemoryAgentArgs(args=args)
+        print(f"[WARNING] Unsupported agent type: {args.agent_type}. Falling back to JitRLAgent.")
+        selected_agent_args = JitRLAgentArgs(args=args)
 
     exp_args = ExpArgs(
         env_args=env_args,
