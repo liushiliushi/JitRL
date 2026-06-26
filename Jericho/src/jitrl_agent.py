@@ -26,7 +26,7 @@ class JitRLAgent:
             game_dir = getattr(self.args, 'output_path', 'output')
             game_dir = os.path.join(game_dir, getattr(self.args, 'game_name', 'game'))
             model_slug = getattr(self.args, 'llm_model', 'model').replace('/', '_').replace('\\', '_')
-            agent_type = getattr(self.args, 'agent_type', 'our')
+            agent_type = getattr(self.args, 'agent_type', 'jitrl')
             self.cross_mem_dir = os.path.join(game_dir, agent_type, model_slug)
             gamma = getattr(self.args, 'gamma', 0.95)
             llm_model = getattr(self.args, 'llm_model')

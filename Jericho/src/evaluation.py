@@ -44,7 +44,7 @@ class GameEvaluator:
                 
         print(f"Episode logs and summary will be in: {self.log_dir}")
         
-        if self.args.agent_type == 'memory':
+        if self.args.agent_type == 'jitrl':
             agent = JitRLAgent(self.args, guiding_prompt="")
         elif self.args.agent_type == 'our':
             agent = OurAgent(self.args, guiding_prompt="")

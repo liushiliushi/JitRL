@@ -127,17 +127,17 @@ WA_WIKIPEDIA=http://localhost:8888
 ```bash
 cd Jericho
 
-# Run memory agent on Zork 1 for 10 episodes
-python main.py --game_name zork1 --agent_type memory --eval_runs 10
+# Run JitRL agent on Zork 1 for 10 episodes
+python main.py --game_name zork1 --agent_type jitrl --eval_runs 10
 
 # Run with cross-episode memory disabled (baseline)
-python main.py --game_name zork1 --agent_type memory --no-enable_cross_mem
+python main.py --game_name zork1 --agent_type jitrl --no-enable_cross_mem
 
 # Run UCB tree search agent
 python main.py --game_name library --agent_type our --eval_runs 50
 
 # Use different LLM model
-python main.py --game_name zork1 --llm_model gpt-4o --eval_runs 10
+python main.py --game_name zork1 --llm_model openai/gpt-4o --eval_runs 10
 ```
 
 **Key Arguments:**
@@ -145,12 +145,12 @@ python main.py --game_name zork1 --llm_model gpt-4o --eval_runs 10
 | Argument | Default | Description |
 |----------|---------|-------------|
 | `--game_name` | `library` | Game to play |
-| `--agent_type` | `memory` | Agent: `memory`, `our`, `naive`, `awm` |
+| `--agent_type` | `jitrl` | Agent: `jitrl`, `our`, `naive`, `awm` |
 | `--eval_runs` | `50` | Number of episodes |
-| `--llm_model` | `gemini-2.5-flash` | LLM model |
+| `--llm_model` | `google/gemini-2.5-flash-preview-09-2025` | LLM model |
 | `--env_step_limit` | `50` | Max steps per episode |
 | `--enable_cross_mem` | `True` | Enable cross-episode memory |
-| `--gamma` | `0.95` | Discount factor for rewards |
+| `--gamma` | `0.5` | Discount factor for rewards |
 
 ### WebArena: Web Automation
 

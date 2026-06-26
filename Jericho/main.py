@@ -36,7 +36,7 @@ def parse_args():
     parser.add_argument('--track_valid_changes', default=False, action=argparse.BooleanOptionalAction, help='Track valid action changes (if applicable).')
 
     # Evaluation parameters
-    parser.add_argument('--agent_type', type=str, default='memory', choices=['memory', 'our', 'naive', 'awm'], help='Method to evaluate.')
+    parser.add_argument('--agent_type', type=str, default='jitrl', choices=['jitrl', 'our', 'naive', 'awm'], help='Method to evaluate.')
 
     parser.add_argument('--eval_runs', type=int, default=50, help='Number of episodes to run for statistical evaluation.')
     parser.add_argument('--evol_temperature', default=0.8, type=float, help="Temperature for the evolutionary's LLM.")
