@@ -227,7 +227,7 @@ Output only the numerical score (e.g., 0.65):"""
         return 0.0
 
 
-def evaluate_step_scores_with_llm(game_history, state, final_score, success, llm_model="google/gemini-2.5-flash-preview-09-2025", temperature=0.8):
+def evaluate_step_scores_with_llm(game_history, state, final_score, success, llm_model="google/gemini-2.5-flash", temperature=0.8):
     """
     Use LLM to assign scores for each step in the trajectory.
 

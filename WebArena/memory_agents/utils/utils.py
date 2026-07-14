@@ -1763,7 +1763,7 @@ def extract_effective_trajectory_context(
     normalized_actions,
     screenshots_dir,
     current_step,
-    llm_model="google/gemini-2.5-flash-preview-09-2025",
+    llm_model="google/gemini-2.5-flash",
     temperature=0.3,
     max_tokens=1000
 ):

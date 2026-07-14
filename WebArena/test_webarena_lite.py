@@ -9,14 +9,14 @@ Features:
 
 Usage:
     # Test all WebArena-Lite tasks once (parallel, 4 workers)
-    python test_webarena_lite.py --model google/gemini-2.5-flash-preview-09-2025 --workers 4
+    python test_webarena_lite.py --model google/gemini-2.5-flash --workers 4
 
     # Test tasks 0-10, running each up to 3 times with early stopping (parallel, 8 workers)
     # Each task stops after first success, saving time
-    python test_webarena_lite.py --start 0 --end 10 --repeat 3 --workers 8 --model google/gemini-2.5-flash-preview-09-2025
+    python test_webarena_lite.py --start 0 --end 10 --repeat 3 --workers 8 --model google/gemini-2.5-flash
 
     # Test specific tasks (serial execution)
-    python test_webarena_lite.py --tasks 0,1,2,25 --workers 1 --model google/gemini-2.5-flash-preview-09-2025
+    python test_webarena_lite.py --tasks 0,1,2,25 --workers 1 --model google/gemini-2.5-flash
 """
 
 import os
@@ -682,7 +682,7 @@ def get_completed_tasks_from_log_dir(log_dir):
 def main():
     parser = argparse.ArgumentParser(description="Test WebArena-Lite tasks (165 tasks) with parallel execution")
     parser.add_argument('--model', type=str,
-                       default='google/gemini-2.5-flash-preview-09-2025',
+                       default='google/gemini-2.5-flash',
                        help='LLM model to use. Can be API model name (e.g., "gpt-4o", "claude-3-opus") or local model path (e.g., "/path/to/local/model")')
     parser.add_argument('--llm_eval', type=str, default=None,
                        help='LLM model for evaluation (if not specified, uses --model)')

@@ -144,10 +144,15 @@ python main.py --game_name zork1 --llm_model openai/gpt-4o --eval_runs 10
 | `--game_name` | `library` | Game to play |
 | `--agent_type` | `jitrl` | Agent: `jitrl`, `naive`, `awm` |
 | `--eval_runs` | `50` | Number of episodes |
-| `--llm_model` | `google/gemini-2.5-flash-preview-09-2025` | LLM model |
+| `--llm_model` | `google/gemini-2.5-flash` | LLM model |
 | `--env_step_limit` | `50` | Max steps per episode |
 | `--enable_cross_mem` | `True` | Enable cross-episode memory |
 | `--gamma` | `0.5` | Discount factor for rewards |
+
+> **Note on reproducibility:** The Gemini-2.5-Flash results in the paper were obtained with the
+> `google/gemini-2.5-flash-preview-09-2025` snapshot on OpenRouter, which has since been retired.
+> The defaults now point to the stable `google/gemini-2.5-flash`; reproduced numbers may differ
+> slightly due to the model version change.
 
 ### WebArena: Web Automation
 

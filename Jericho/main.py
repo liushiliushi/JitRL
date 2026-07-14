@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument('--seed', default=0, type=int, help="Random seed for reproducibility. If None, a random seed is used.")
 
     # LLM
-    parser.add_argument('--llm_model', default='google/gemini-2.5-flash-preview-09-2025', type=str, help="LLM model for the game-playing agent.")
+    parser.add_argument('--llm_model', default='google/gemini-2.5-flash', type=str, help="LLM model for the game-playing agent.")
 
     parser.add_argument('--top_actions', default=3, type=int, help="Number of potential action.")
     parser.add_argument('--llm_temperature', default=0.8, type=float, help="Temperature for the agent's LLM.")
@@ -46,7 +46,7 @@ def parse_args():
     parser.add_argument('--retrieval_threshold', type=float, default=0.95, help='Similarity threshold for retrieving relevant history entries.')
 
     # Evolutionary parameters (used by AWM induction model)
-    parser.add_argument('--evolution_llm_model', default='google/gemini-2.5-flash-preview-09-2025', type=str, help='LLM model for the evolutionary operator.')
+    parser.add_argument('--evolution_llm_model', default='google/gemini-2.5-flash', type=str, help='LLM model for the evolutionary operator.')
 
     # Cross-episode memory toggle (few-shot positives + negative contrast during evolution)
     parser.add_argument('--enable_cross_mem', default=True, action=argparse.BooleanOptionalAction,
@@ -65,7 +65,7 @@ def parse_args():
                     help='Mode for confidence calculation: "logit" extracts logprobs (OpenAI only), "verbalized" asks model for explicit confidence percentages (works with all models).')
 
     # Evaluation LLM model (for step scoring)
-    parser.add_argument('--eval_llm_model', type=str, default='google/gemini-2.5-flash-preview-09-2025',
+    parser.add_argument('--eval_llm_model', type=str, default='google/gemini-2.5-flash',
                     help='LLM model for evaluating step scores in cross-episode memory.')
 
     return parser.parse_args()
