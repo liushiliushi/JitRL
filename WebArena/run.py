@@ -179,62 +179,24 @@ def parse_args():
     )
 
     parser.add_argument(
+        '--top_actions',
+        default=3, type=int, help="Number of potential action."
+    )
+    
+    parser.add_argument(
         '--llm_temperature',
         default=0.8, type=float, help="Temperature for the agent's LLM."
     )
 
     parser.add_argument(
+        '--logit_mode',
+        type=str, default="verbalized", choices=["token", "verbalized"],
+        help="Method to extract action probabilities: 'token' uses token logits (GPT), 'verbalized' uses model-provided confidence scores (Gemini)."
+    )
+
+    parser.add_argument(
         '--max_memory',
         default=30, type=int, help="Maximum number of past states to keep in memory for the agent."
-    )
-
-    # ── Strategy Space & Exploration Modules ──
-    parser.add_argument(
-        '--strategy_structure',
-        type=str, default='dag', choices=['flat', 'tree', 'dag', 'action_tree'],
-        help='Strategy space structure: flat (list), tree, dag (directed acyclic graph), or action_tree.'
-    )
-
-    parser.add_argument(
-        '--guidance_mode',
-        type=str, default='hierarchical', choices=['full_plan', 'step_by_step', 'hierarchical'],
-        help='How strategy guidance is injected into prompts.'
-    )
-
-    parser.add_argument(
-        '--exploration_method',
-        type=str, default='thompson', choices=['ucb', 'thompson', 'epsilon_greedy'],
-        help='Exploration method for selecting strategy paths.'
-    )
-
-    parser.add_argument(
-        '--exploration_c',
-        type=float, default=1.414,
-        help='UCB exploration constant (only used with --exploration_method ucb).'
-    )
-
-    parser.add_argument(
-        '--exploration_epsilon',
-        type=float, default=0.2,
-        help='Epsilon for epsilon-greedy exploration (only used with --exploration_method epsilon_greedy).'
-    )
-
-    parser.add_argument(
-        '--evolution_method',
-        type=str, default='reflection', choices=['reflection', 'dpm'],
-        help='Strategy space evolution method: reflection (periodic LLM review) or dpm (decision point mining on failures).'
-    )
-
-    parser.add_argument(
-        '--evolution_interval',
-        type=int, default=5,
-        help='Number of episodes between reflection-based evolution triggers.'
-    )
-
-    parser.add_argument(
-        '--strategy_seed_file',
-        type=str, default='strategy_seeds.json',
-        help='Path to initial strategy seeds JSON file.'
     )
     
     parser.add_argument(
@@ -303,7 +265,31 @@ def parse_args():
         type=int, default=300, help='Maximum tokens for summarization response.'
     )
     
-    # (RAG parameters removed — replaced by strategy space modules)
+    # RAG agent parameters
+    parser.add_argument(
+        '--retrieval_top_k',
+        type=int, default=3, help='Number of top-k most relevant history entries to retrieve.'
+    )
+    
+    parser.add_argument(
+        '--retrieval_threshold',
+        type=float, default=0.1, help='Similarity threshold for retrieving relevant history entries.'
+    )
+
+    parser.add_argument(
+        '--embedding_api_key',
+        type=str, default='None', help='API key for embedding API (if different from main LLM API key).'
+    )
+    
+    parser.add_argument(
+        '--rag_temperature',
+        type=float, default=0.4, help='Temperature for the RAG enhancement LLM.'
+    )
+    
+    parser.add_argument(
+        '--rag_max_tokens',
+        type=int, default=400, help='Maximum tokens for RAG enhancement response.'
+    )
     
     parser.add_argument(
         '--initial_prompts_file',
@@ -348,6 +334,12 @@ def parse_args():
     parser.add_argument(
         '--save_memory',
         default=True, action=argparse.BooleanOptionalAction, help='Save memory at the end of each episode. When False, memory retrieval still works but no new memories are saved.'
+    )
+
+    parser.add_argument(
+        '--task_similarity_threshold',
+        type=float, default=0.27,
+        help='Task similarity threshold for memory retrieval. Higher values require more similar tasks to share memories. Default: 0.27'
     )
 
     # Config directory selection
