@@ -94,7 +94,13 @@ class JitRLAgent:
         End an episode: update the current node's score and game history.
         """
         print(f"Ending episode with score: {score}.")
-                    # Store complete episode in cross-episode memory
+
+        # Skip episode storage if memory is disabled
+        if not self.enable_cross_mem or self.cross_mem is None:
+            print(f"[INFO] Memory disabled - skipping episode storage and prompt update")
+            return
+
+        # Store complete episode in cross-episode memory
         if self.game_history:
             # Determine if episode was successful (score > 0 or won)
             success = self._detect_victory_from_observation(state)
@@ -225,6 +231,10 @@ class JitRLAgent:
         return exploration_prob
 
     def update_scores(self, state_node, options_with_logits, k, r, memory_text, info=None):
+        # Skip memory retrieval if memory is disabled
+        if not self.enable_cross_mem or self.cross_mem is None:
+            return {}
+
         nearest_trajectories = self.cross_mem.retrieve_similar(
                 game_history=self.game_history,
                 current_state=state_node.state,
