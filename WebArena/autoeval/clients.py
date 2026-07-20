@@ -7,7 +7,7 @@ from typing import Union, Optional
 from openai import OpenAI, ChatCompletion
 
 # Configure API key
-openai.api_key = os.environ["OPENAI_API_KEY"]
+openai.api_key = os.environ.get("OPENAI_API_KEY", "")
 openai.organization = os.environ.get("OPENAI_ORGANIZATION", "")
 
 def _is_openai_model(model_name: str) -> bool:
@@ -54,8 +54,10 @@ def _get_client(model_name: str) -> OpenAI:
             base_url=openrouter_base_url
         )
 
-# Global client for backward compatibility (defaults to OpenAI)
-client = OpenAI()
+# Global client for backward compatibility (defaults to OpenAI).
+# Constructed lazily: stays None when OPENAI_API_KEY is unset so importing this
+# module never fails just because no key is configured.
+client = OpenAI() if os.environ.get("OPENAI_API_KEY") else None
 
 
 class LM_Client:

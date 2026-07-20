@@ -10,3 +10,7 @@ easy_ocr
 einops
 transformers_stream_generator
 tiktoken
+numpy
+beartype
+nltk
+playwright
