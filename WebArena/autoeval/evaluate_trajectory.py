@@ -4,7 +4,8 @@ import json
 import argparse
 import traceback
 
-# Add parent directory to path for workflow_utils import
+# Add parent directory to path so the `autoeval` package resolves when this
+# file is run as a script (python autoeval/evaluate_trajectory.py)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from autoeval.evaluator import Evaluator
@@ -14,7 +15,7 @@ from autoeval.enhanced_evaluator import (
     create_trajectory_from_info,
     create_pseudo_page_from_info
 )
-from workflow_utils import extract_think_and_action as _extract_think_and_action
+from autoeval.workflow_utils import extract_think_and_action as _extract_think_and_action
 
 
 def extract_think_and_action(path: str) -> tuple[list[str], list[str]]:
