@@ -3,4 +3,5 @@ JitRL/*
 __pycache__/
 *.egg-info/
 uv.lock
+/benchmarks/results/
 Jericho/src/__pycache__/awm_agent.cpython-313.pyc
