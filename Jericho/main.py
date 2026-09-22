@@ -11,6 +11,12 @@ except ImportError:
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    # Load optional mode flags without requiring local model libraries.
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from jitrl_decision import add_decision_arguments
+    add_decision_arguments(parser)
     
     # Game
     parser.add_argument('--rom_path', default='jericho-games/', type=str, help="Path to the directory containing game ROMs.")

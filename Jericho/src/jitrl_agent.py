@@ -267,6 +267,8 @@ class JitRLAgent:
             action_rewards[action].append(discounted_reward)
         
         for action in action_rewards:
+            if getattr(self.args, 'decision_mode', 'legacy') == 'single_forward':
+                continue  # The caller supplies the complete allowed action set.
             found = False
             for option_data in options_with_logits.values():
                 if isinstance(option_data, dict) and option_data.get('action', '') == action:
@@ -564,6 +566,9 @@ KEY RULES:
 
     # Generates the next action from the LLM based on its memory and the current state node.
     def generate_action(self, state_node, info=None):
+        if getattr(self.args, 'decision_mode', 'legacy') == 'single_forward':
+            from jitrl_decision import decide
+            return decide(self, state_node, info=info)
         sys_prompt, user_prompt, memory_text = self.get_prompts(state_node, info=info)
 
         # Check confidence mode

@@ -122,6 +122,75 @@ WA_WIKIPEDIA=http://localhost:8888
 
 ## Quick Start
 
+### Optional single-forward decisions
+
+The default `--decision_mode legacy` retains the existing generated-action
+workflow, including `--confidence_mode` (Jericho) or `--logit_mode` (WebArena).
+Use `--decision_mode single_forward` to give a local LLM a closed set of actions
+and score every option at one next-token position. This mode does not generate
+reasoning, action text, or verbal confidence. It reads candidate logits from
+the full vocabulary and applies softmax **only across the supplied candidates**.
+Option labels must each map to one vocabulary token; unsupported candidate
+counts and oversized prompts fail explicitly instead of dropping choices.
+
+Install the optional backend from the repository root, in addition to the
+environment's existing dependencies:
+
+```bash
+python -m pip install -e '.[local]'
+cd Jericho
+python main.py --game_name zork1 --agent_type jitrl --eval_runs 10 \
+    --decision_mode single_forward --decision_model Qwen/Qwen3-8B \
+    --decision_beta 1.0
+```
+
+Jericho supplies `info['valid']` as the candidate set. All valid actions are
+scored; `--top_actions` does not truncate this set. `--decision_model` is the
+local decision model; `--llm_model` and the evaluation model remain available
+for existing memory/reward helpers. Use a model with a chat template; Qwen3
+thinking is disabled for this decision pass. The 8B example requires enough
+device memory for its weights and prompt.
+
+The existing memory retriever and advantage estimator are reused. For this
+mode the final policy is `softmax(log(p_base) + normalized_advantage / beta)`,
+with finite `beta > 0`. The highest-probability allowed action is executed.
+Memory cannot add actions outside the supplied set. Logs contain both
+`base_probabilities` and `policy_probabilities`; the latter are action-selection
+probabilities, not guaranteed calibrated success probabilities.
+
+For WebArena, actions can include arbitrary text entry, so there is no automatic
+finite action list. Supply a state-aware candidate provider with this signature:
+
+```python
+def candidates(*, state, history, info, url, instruction):
+    # Return unique, currently valid BrowserGym action strings for this page.
+    # Use state/instruction to choose real element IDs and text values.
+    return build_candidates(state, instruction)
+```
+
+Put the function in an importable module (the `build_candidates` function above
+is your domain-specific implementation), then use the direct WebArena runner:
+
+```bash
+cd WebArena
+python run.py --task_name webarena.0 --agent_type memory \
+    --decision_mode single_forward --decision_model Qwen/Qwen3-8B \
+    --decision_candidate_provider my_candidates:candidates
+```
+
+The provider receives fresh state each step and must supply valid action strings.
+It can also be used in Jericho to select a subset of environment-valid actions.
+Single-forward mode uses text state, not screenshot input. The WebArena batch
+wrapper `test_webarena_lite.py` accepts the same decision flags; start with
+`--workers 1` since each worker loads its own local model. Candidate construction, memory processing, step summaries,
+and reward evaluation may make additional calls: **one forward refers to the
+decision scorer after candidates are available**, not the complete agent step.
+
+Run offline tests with `python -m unittest discover -s tests -v` from the root.
+With the local extra installed, this includes a randomly initialized tiny Llama
+test checking exactly one forward and candidate-only normalization; no model
+download, game server, API credentials, or paid requests are needed for tests.
+
 ### Jericho: Text Adventure Games
 
 ```bash

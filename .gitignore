@@ -1,2 +1,6 @@
 JitRL/*
+.venv/
+__pycache__/
+*.egg-info/
+uv.lock
 Jericho/src/__pycache__/awm_agent.cpython-313.pyc

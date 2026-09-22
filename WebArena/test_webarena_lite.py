@@ -242,7 +242,7 @@ def run_task(task_id, model, max_steps=15, log_file=None, llm_eval=None, llm_ext
              use_screenshot_action=False, use_screenshot_eval=False, disable_memory=False,
              use_llm_success_eval=False, run_id=None, agent_type='memory', task_timeout=600,
              task_similarity_threshold=0.27, repeat_runs=1, logit_mode='verbalized',
-             result_dir='results', save_html=False, no_save_memory=False):
+             result_dir='results', save_html=False, no_save_memory=False, decision_options=None):
     """Run a single task and return success status.
 
     Args:
@@ -309,6 +309,9 @@ def run_task(task_id, model, max_steps=15, log_file=None, llm_eval=None, llm_ext
 
     # Add logit_mode parameter
     cmd.extend(["--logit_mode", logit_mode])
+    for name, value in (decision_options or {}).items():
+        if value is not None:
+            cmd.extend([f"--{name}", str(value)])
 
     # Add result_dir parameter
     cmd.extend(["--result_dir", result_dir])
@@ -529,7 +532,8 @@ def run_task_wrapper(args_dict):
                      use_screenshot_action, use_screenshot_eval, disable_memory,
                      use_llm_success_eval, repeat_idx + 1, agent_type, task_timeout,
                      task_similarity_threshold, repeat_runs=repeat_runs, logit_mode=logit_mode,
-                     result_dir=result_dir, save_html=save_html, no_save_memory=no_save_memory)
+                     result_dir=result_dir, save_html=save_html, no_save_memory=no_save_memory,
+                     decision_options=args_dict.get('decision_options'))
     task_duration = time.time() - task_start
 
     # Handle multiple results from run.py (when repeat_runs > 1)
@@ -681,6 +685,9 @@ def get_completed_tasks_from_log_dir(log_dir):
 
 def main():
     parser = argparse.ArgumentParser(description="Test WebArena-Lite tasks (165 tasks) with parallel execution")
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from jitrl_decision import add_decision_arguments
+    add_decision_arguments(parser)
     parser.add_argument('--model', type=str,
                        default='google/gemini-2.5-flash',
                        help='LLM model to use. Can be API model name (e.g., "gpt-4o", "claude-3-opus") or local model path (e.g., "/path/to/local/model")')
@@ -889,6 +896,7 @@ def main():
                         'task_similarity_threshold': args.task_similarity_threshold,
                         'repeat_runs': 1,  # Single run per entry
                         'logit_mode': args.logit_mode,
+                        'decision_options': {key: getattr(args, key) for key in ('decision_mode', 'decision_model', 'decision_beta', 'decision_candidate_provider')},
                         'result_dir': args.result_dir,
                         'save_html': args.save_html,
                         'no_save_memory': args.no_save_memory,
@@ -917,6 +925,7 @@ def main():
                     'task_similarity_threshold': args.task_similarity_threshold,
                     'repeat_runs': args.repeat,
                     'logit_mode': args.logit_mode,
+                    'decision_options': {key: getattr(args, key) for key in ('decision_mode', 'decision_model', 'decision_beta', 'decision_candidate_provider')},
                     'result_dir': args.result_dir,
                     'save_html': args.save_html,
                     'no_save_memory': args.no_save_memory,

@@ -256,6 +256,8 @@ class BrowserGymJitRLAgent(Agent):
         
         # Add actions from memory that are not in options_with_logits
         for normalized_action in action_rewards:
+            if getattr(self.args, 'decision_mode', 'legacy') == 'single_forward':
+                continue  # Do not expand the caller's closed action set.
             found = False
             for option_data in options_with_logits.values():
                 if isinstance(option_data, dict) and option_data.get('normalized_action', '') == normalized_action:
@@ -803,6 +805,10 @@ Analyze the current state, consider your recent history, and provide {self.args.
 
     # Generates the next action from the LLM based on its memory and the current state node.
     def generate_action(self, state_node, url=None, screenshot=None):
+        if getattr(self.args, 'decision_mode', 'legacy') == 'single_forward':
+            from jitrl_decision import decide
+            from .utils.utils import normalize_action
+            return decide(self, state_node, url=url, web=True, normalize_action=normalize_action)
         sys_prompt, user_prompt, memory_text = self.get_prompts(state_node)
 
         # Prepare screenshot as base64 if provided

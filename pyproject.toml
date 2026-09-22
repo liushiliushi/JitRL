@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jitrl-decision"
+version = "0.1.0"
+requires-python = ">=3.10"
+description = "Optional closed-set, single-forward decisions for JitRL"
+dependencies = []
+
+[project.optional-dependencies]
+local = ["torch>=2.5", "transformers>=4.51,<5", "accelerate>=1.2"]
+
+[tool.setuptools.packages.find]
+include = ["jitrl_decision*"]

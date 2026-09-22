@@ -66,6 +66,9 @@ def str2bool(v):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run experiment with hyperparameters.")
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from jitrl_decision import add_decision_arguments
+    add_decision_arguments(parser)
     # Environment settings
     parser.add_argument(
         "--task_name",
