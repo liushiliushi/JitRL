@@ -7,7 +7,8 @@ import math
 
 def add_decision_arguments(parser):
     parser.add_argument('--decision_mode', choices=['legacy', 'single_forward'], default='legacy')
-    parser.add_argument('--decision_model', help='Local Hugging Face model name/path; required in single_forward mode.')
+    parser.add_argument('--decision_backend', choices=['local', 'openrouter'], default='local')
+    parser.add_argument('--decision_model', help='Hugging Face model/path or OpenRouter model ID; required in single_forward mode.')
     parser.add_argument('--decision_candidate_provider', help='Optional module:function accepting state, history, info, url; returns action strings. Required for WebArena.')
     parser.add_argument('--decision_beta', type=float, default=1.0, help='Positive KL temperature for memory advantage adjustment.')
 
@@ -29,6 +30,14 @@ def softmax(values):
     weights = [math.exp(v - maximum) for v in values]
     total = sum(weights)
     return [w / total for w in weights]
+
+
+def decision_prompt(state, history, actions, labels, instruction):
+    return (f'Goal: {instruction}\nState: {state}\nRecent history: '
+            + json.dumps(history, ensure_ascii=False, default=str)
+            + '\nLegal candidate actions (choose only from this list):\n'
+            + '\n'.join(f'{label}: {action}' for label, action in zip(labels, actions))
+            + '\nReply with exactly one option label, without explanation or whitespace.')
 
 
 class LocalDecisionScorer:
@@ -57,10 +66,7 @@ class LocalDecisionScorer:
         if len(actions) > len(self.labels):
             raise ValueError(f'{len(actions)} candidates exceed {len(self.labels)} available single-token labels; provide a smaller valid candidate set.')
         labels = self.labels[:len(actions)]
-        prompt = (f'Goal: {instruction}\nState: {state}\nRecent history: '
-                  + json.dumps(history, ensure_ascii=False, default=str)
-                  + '\nChoose the best next action. Reply with exactly one option label.\n'
-                  + '\n'.join(f'{label}: {action}' for (label, _), action in zip(labels, actions)))
+        prompt = decision_prompt(state, history, actions, [label for label, _ in labels], instruction)
         encoded = self.tokenizer.apply_chat_template(
             [{'role': 'user', 'content': prompt}], tokenize=False,
             add_generation_prompt=True, enable_thinking=False)
@@ -97,7 +103,11 @@ def decide(agent, state_node, info=None, url=None, web=False, normalize_action=N
         if any(a not in info['valid'] for a in actions):
             raise ValueError('Candidate provider returned an action outside the environment valid set.')
     if not hasattr(agent, '_decision_scorer'):
-        agent._decision_scorer = LocalDecisionScorer(getattr(agent.args, 'decision_model', None))
+        if getattr(agent.args, 'decision_backend', 'local') == 'openrouter':
+            from .openrouter import OpenRouterDecisionScorer
+            agent._decision_scorer = OpenRouterDecisionScorer(getattr(agent.args, 'decision_model', None))
+        else:
+            agent._decision_scorer = LocalDecisionScorer(getattr(agent.args, 'decision_model', None))
     labels, log_probs = agent._decision_scorer.score(state_node.state, history, actions, instruction)
     if len(log_probs) != len(actions) or len(labels) != len(actions):
         raise ValueError('Scorer must return one label/log probability per candidate.')

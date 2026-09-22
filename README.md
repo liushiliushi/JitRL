@@ -151,6 +151,37 @@ for existing memory/reward helpers. Use a model with a chat template; Qwen3
 thinking is disabled for this decision pass. The 8B example requires enough
 device memory for its weights and prompt.
 
+#### OpenRouter: send Jericho's legal actions directly to the API
+
+No local decision model is required with `--decision_backend openrouter`.
+At **each step**, the agent reads the current `info['valid']`, includes every
+action with an A/B/C/... label alongside the observation and history in the
+request, and maps the chosen label back to the exact legal action string.
+Set `OPENROUTER_API_KEY` in your environment (never commit it), then run:
+
+```bash
+# From the repository root; game/environment dependencies are still required.
+python -m pip install -e .
+cd Jericho
+python main.py --game_name zork1 --agent_type jitrl --eval_runs 1 \
+    --decision_mode single_forward --decision_backend openrouter \
+    --decision_model openai/gpt-4o-mini
+```
+
+The API request uses `max_tokens=1`, `logprobs=true`, `top_logprobs=20` and
+`provider.require_parameters=true`. GPT-4o-mini and GPT-4o passed a four-choice
+API smoke test; GPT-4.1 routes rejected those logprob parameters at test time.
+API mode guarantees one requested output token, not a provider-internal forward
+count. Returned candidate logprobs are normalized before memory adjustment.
+
+OpenRouter only returns top token logprobs, not the full vocabulary. If a legal
+action set has more than 20 entries, or any option label is absent from the
+response, this backend fails explicitly: it never truncates the action list or
+assigns zero probability to missing choices. Use `--decision_backend local`
+for larger complete sets, or explicitly supply a smaller valid subset through
+`--decision_candidate_provider`. Even sets smaller than 20 may have missing
+labels, so this API backend is not guaranteed to cover every Jericho state.
+
 The existing memory retriever and advantage estimator are reused. For this
 mode the final policy is `softmax(log(p_base) + normalized_advantage / beta)`,
 with finite `beta > 0`. The highest-probability allowed action is executed.

@@ -896,7 +896,7 @@ def main():
                         'task_similarity_threshold': args.task_similarity_threshold,
                         'repeat_runs': 1,  # Single run per entry
                         'logit_mode': args.logit_mode,
-                        'decision_options': {key: getattr(args, key) for key in ('decision_mode', 'decision_model', 'decision_beta', 'decision_candidate_provider')},
+                        'decision_options': {key: getattr(args, key) for key in ('decision_mode', 'decision_backend', 'decision_model', 'decision_beta', 'decision_candidate_provider')},
                         'result_dir': args.result_dir,
                         'save_html': args.save_html,
                         'no_save_memory': args.no_save_memory,
@@ -925,7 +925,7 @@ def main():
                     'task_similarity_threshold': args.task_similarity_threshold,
                     'repeat_runs': args.repeat,
                     'logit_mode': args.logit_mode,
-                    'decision_options': {key: getattr(args, key) for key in ('decision_mode', 'decision_model', 'decision_beta', 'decision_candidate_provider')},
+                    'decision_options': {key: getattr(args, key) for key in ('decision_mode', 'decision_backend', 'decision_model', 'decision_beta', 'decision_candidate_provider')},
                     'result_dir': args.result_dir,
                     'save_html': args.save_html,
                     'no_save_memory': args.no_save_memory,
